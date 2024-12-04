@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>jQuery Terminal Example</title>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- jQuery Terminal CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.terminal/2.34.0/css/jquery.terminal.min.css">
+
+  <!-- jQuery Terminal JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.terminal/2.34.0/js/jquery.terminal.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    #terminal {
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+<!-- Terminal Container -->
+<div id="terminal"></div>
+
+<script>
+  $(document).ready(function () {
+    // Initialize the terminal
+    $('#terminal').terminal(function(command, terminal) {
+      if (command === 'help') {
+        terminal.echo('Available commands:');
+        terminal.echo('1. [[;green;]help] - Show available commands');
+        terminal.echo('2. [[;green;]hello] - Greet the user');
+        terminal.echo('3. [[;green;]date] - Show the current date and time');
+        terminal.echo('4. [[;green;]clear] - Clear the terminal');
+      } else if (command === 'hello') {
+        terminal.echo('Hello! Welcome to the jQuery Terminal example.');
+      } else if (command === 'date') {
+        terminal.echo(new Date().toString());
+      } else if (command === '') {
+        // Do nothing on an empty input
+      } else {
+        terminal.error('Unknown command: ' + command);
+      }
+    }, {
+      greetings: 'Welcome to the jQuery Terminal Example\nType [[;green;]help] to see available commands.',
+      prompt: '>>> ',
+      name: 'terminal_example'
+    });
+  });
+</script>
+</body>
+</html>
