@@ -14,6 +14,59 @@ $(document).ready(function () {
         date: function() {
             this.echo(new Date().toString());
         },
+        mkdir: function(dir) {
+            if(filetree.checkChild(dir, true)) {
+                this.error('File/Directory with such name already exists');
+                return;
+            }
+            filetree.addChild(dir, true);
+        },
+        cd: function(path) {
+
+            const pathSegments = path.split('/');
+
+            let currentDir = "";
+            for (const dir of pathSegments) {
+                if (!filetree.checkChild(dir, true)) {
+                    this.error(`Directory "${dir}" does not exist`);
+                    return;
+                }
+                currentDir = filetree.gotoChild(dir);
+            }
+
+            this.set_prompt(`student@edu-terminal ${currentDir} $ `);
+        },
+        ls: function() {
+            children = filetree.getChildrenNames();
+            for (const child of children) {
+                this.echo(child);
+            }
+        },
+        pwd: function() {
+            this.echo(filetree.currentNode.current_path);
+        },
+        touch: function(file) {
+            if(filetree.checkChild(file, false)) {
+                this.error('File/Directory with such name already exists');
+                return;
+            }
+            filetree.addChild(file, false);
+        },
+        rm: function(file) {
+            if (filetree.checkChild(file, true) || !filetree.checkChild(file, false)) {
+                return;
+            }
+            filetree.deleteChild(file);
+        },
+        // rmdir: function(dir) {
+        //     if (filetree.check)
+        // }
+        tree: function() {
+            layers = filetree.displayTree();
+            for (const layer of layers) {
+                this.echo(layer);
+            }
+        },
         clear: function() {
             this.clear();
         }
@@ -25,7 +78,7 @@ $(document).ready(function () {
             if (!command.trim()) {
                 // Do nothing for empty commands (spaces, tabs, etc.)
             } else {
-                this.echo(`Command not found: ${command}`);
+                this.error(`Command not found: ${command}`);
             }
         }
     });
