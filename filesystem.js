@@ -237,6 +237,18 @@ class FileSystem {
         this.saveFileSystem();
     }
 
+    rmrf(path) {
+        const target = this.resolvePath(path);
+        if (!target.isDirectory) {
+            throw new Error('Not a directory');
+        }
+        if (target === this.root) {
+            throw new Error('Cannot remove root directory');
+        }
+        target.parent.children.delete(target.name);
+        this.saveFileSystem();
+    }
+
     rmdir(path) {
         const target = this.resolvePath(path);
         if (!target.isDirectory) {
