@@ -285,8 +285,6 @@ class TestManager {
         return this.formatResults();
     }
 
-
-
     test(testName, fn) {
         try {
             fn();
