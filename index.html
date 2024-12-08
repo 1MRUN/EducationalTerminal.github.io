@@ -3,32 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Educational Terminal</title>
-
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-  <!-- jQuery Terminal CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.terminal/2.34.0/css/jquery.terminal.min.css">
-
-  <!-- jQuery Terminal JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.terminal/2.34.0/js/jquery.terminal.min.js"></script>
-
+  <title>Web Terminal</title>
   <style>
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
+      background-color: #1e1e1e;
     }
-    #terminal {
-      width: 100%;
+
+    #terminal-container {
       height: 100vh;
+      padding: 0;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .terminal-line {
+      display: flex;
+      align-items: center;
+      margin: 2px 0;
+    }
+
+    .terminal-input {
+      margin-left: 5px;
+    }
+
+    .terminal-output {
+      margin: 2px 0;
     }
   </style>
 </head>
 <body>
-<!-- Terminal Container -->
-<div id="terminal"></div>
-<script src="filetree.js"></script>
-<script src="main.js"></script>
+<div id="terminal-container"></div>
+<script type="module">
+  import Terminal from './terminal.js';
+  import Commands from './commands.js';
+
+  const terminal = new Terminal('terminal-container', {
+    prompt: '$ ',
+    welcomeMessage: 'Welcome to WebTerminal v1.0.0\nType "help" for available commands.'
+  });
+
+  new Commands(terminal);
+</script>
 </body>
 </html>
