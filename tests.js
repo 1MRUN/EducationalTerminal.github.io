@@ -210,7 +210,7 @@ class TestManager {
                     const startIdx = Math.floor(Math.random() * file.content.length);
                     const maxLength = file.content.length - startIdx; // Remaining length of the string
                     const length = Math.floor(Math.random() * maxLength) + 1; // Random substring length
-                    const randomSubstring = file.content.substring(startIdx, startIdx + length);
+                    const randomSubstring = file.content;
                     //console.log('new finding\n');
                     //console.log('rand :',randomSubstring, '\n cont:',file.content);
                     // Perform the search
