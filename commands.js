@@ -157,26 +157,6 @@ export class Commands {
             }
         });
 
-        // GREP command
-        this.terminal.registerCommand('grep', 'Search for a pattern in all files', (args) => {
-            if (args.length < 1) return 'grep: missing pattern';
-            const pattern = args[0];
-            const allFiles = this.fs.getAllFiles();
-            let minDistance = Infinity;
-            let minDistanceFile = '';
-
-            for (const filePath of allFiles) {
-                const content = this.fs.readFile(filePath);
-                const distance = this.terminal.bitapSearch(content, pattern);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    minDistanceFile = this.fs.getAbsolutePath() + '/' + filePath;
-                }
-            }
-
-            return (minDistance !== Infinity) ? `Might be in: ${minDistanceFile}` : 'No files found';
-        });
-
         // Other basic commands
         this.terminal.registerCommand('date', 'Display current date and time', () => {
             return new Date().toString();
