@@ -1,4 +1,4 @@
-import SuffixTree from './suffixtree.js';
+import SuffixTree from "./suffixtree.js";
 
 class TestManager {
     constructor(fs) {
@@ -6,7 +6,6 @@ class TestManager {
         this.passed = 0;
         this.failed = 0;
         this.results = [];
-        this.suffixtree = new SuffixTree();
         this.dirNames = ['documents', 'photos', 'music', 'downloads', 'projects', 'backup', 'work', 'personal', 'videos', 'games'];
         this.fileNames = [
             'report.txt', 'image.jpg', 'data.csv', 'notes.md', 'script.js',
@@ -41,6 +40,7 @@ class TestManager {
         // Directory operations
         const initialDir = this.fs.getAbsolutePath();
         this.fs.mkdir('/testDir');
+
         this.test('cd changes directory', () => {
             this.fs.cd('/');
             if (this.fs.getAbsolutePath() !== '/') throw new Error('Directory not changed');
@@ -111,7 +111,7 @@ class TestManager {
             }
         });
 
-        // Hard coded test
+        // Hard-coded test
         this.test('hard test', () => {
             this.fs.cd('/');
             //console.log(this.fs.ls('.'))
@@ -173,6 +173,7 @@ class TestManager {
         });
         this.fs.rmrf('/testDir');
         this.test('Suffix tree test', () => {
+            const tree = new SuffixTree();
             this.fs.cd('/');
             //console.log(this.fs.ls('.'))
             this.fs.mkdir('testDir');
@@ -195,7 +196,7 @@ class TestManager {
                 for (let j = 0; j < numFiles; j++) {
                     const fileName = this.fileNames[Math.floor(Math.random() * this.fileNames.length)];
                     const content = this.possibleContents[Math.floor(Math.random() * this.possibleContents.length)];
-                    this.suffixtree.addString(content);
+                    tree.addString(content);
                     this.fs.writeFile(fileName, content);
 
                     // Remember file information
@@ -211,18 +212,11 @@ class TestManager {
                     const maxLength = file.content.length - startIdx; // Remaining length of the string
                     const length = Math.floor(Math.random() * maxLength) + 1; // Random substring length
                     const randomSubstring = file.content;
-                    //console.log('new finding\n');
-                    //console.log('rand :',randomSubstring, '\n cont:',file.content);
-                    // Perform the search
-                    const searchResult = this.suffixtree.search(randomSubstring);
-                    //console.log(searchResult, ':search\n ',randomSubstring);
-                    // Optionally, verify the result
+
+                    const searchResult = tree.search(randomSubstring);
                     if (searchResult.findIndex((result) => result === randomSubstring) === -1) {
                         throw new Error(`SuffixTree search failed for substring: ${randomSubstring}`);
                     }
-
-                    // Log or store results if needed
-                    //console.log(`Searched substring: "${randomSubstring}", Found: ${searchResult}`);
                 }  
                 dirMap.set(dirName, {
                     name: dirName,
@@ -235,10 +229,63 @@ class TestManager {
                 throw new Error('Maps not populated correctly');
             }
         });
+
+
+        this.test('initialize and clear SuffixTree', () => {
+            const tree = new SuffixTree();
+            if (tree.text !== '') throw new Error('initial `text` is not empty');
+            if (tree.words.length !== 0) throw new Error('initial `words` is not empty');
+            if (tree.k !== 0) throw new Error('initial value of `k` is not 0');
+            if (tree.i !== -1) throw new Error('initial value of `i` is not -1');
+
+            tree.addString('example');
+            tree.clear();
+
+            if (tree.text !== '') throw new Error('`text` should be empty after clear');
+            if (tree.words.length !== 0) throw new Error('`words` should be empty after clear');
+            if (tree.k !== 0) throw new Error('`k` should be reset to 0 after clear');
+            if (tree.i !== -1) throw new Error('`i` should be reset to -1 after clear');
+        });
+
+        this.test('add string to SuffixTree', () => {
+            const tree = new SuffixTree();
+            tree.addString('banana');
+            if (!tree.text.includes('banana')) throw new Error('Text not added correctly');
+            if (!tree.words.includes('banana#0#')) throw new Error('Word not added correctly');
+        });
+
+        this.test('search for patterns in SuffixTree', () => {
+            const tree = new SuffixTree();
+            tree.addString('banana');
+            tree.addString('band');
+
+            let result = tree.search('ban');
+            if (!result.includes('banana') || !result.includes('band')) throw new Error('pattern search failed for "ban"');
+
+            result = tree.search('ana');
+            if (!result.includes('banana')) throw new Error('pattern search failed for "ana"');
+
+            result = tree.search('band');
+            if (!result.includes('band')) throw new Error('pattern search failed for "band"');
+
+            result = tree.search('not_in_tree');
+            if (result.length !== 0) throw new Error('pattern search should have failed for nonexistent pattern');
+        });
+
+        this.test('find overlapping patterns in SuffixTree', () => {
+            const tree = new SuffixTree();
+            tree.addString('ananabana');
+
+            const result = tree.search('ana');
+            if (!result.includes('ananabana')) throw new Error('pattern search failed for overlapping "ana"');
+        });
+
         this.fs.rmrf('/testDir');
         this.fs.cd(initialDir);
         return this.formatResults();
     }
+
+
 
     test(testName, fn) {
         try {
@@ -263,6 +310,7 @@ class TestManager {
             '',
             this.failed === 0 ? 'All tests passed!' : 'Some tests failed.'
         ].join('\n');
+
     }
 }
 
