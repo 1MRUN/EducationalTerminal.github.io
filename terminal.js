@@ -441,7 +441,6 @@ class Terminal {
         while (this.terminalElement.firstChild) {
             this.terminalElement.removeChild(this.terminalElement.firstChild);
         }
-        this.createNewPrompt();
     }
 
     findClosestCommand(commandName) {
