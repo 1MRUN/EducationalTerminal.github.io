@@ -14,7 +14,7 @@ class FileNode {
             isDirectory: this.isDirectory,
             content: this.content,
             children: this.isDirectory ?
-                Array.from(this.children.entries()).map(([node]) => node.toJSON()) :
+                Array.from(this.children.entries()).map(([_, node]) => node.toJSON()) :
                 null
         };
     }
@@ -115,7 +115,7 @@ class FileSystem {
 
     // Get all files in a directory
     getAllFiles(dir = this.root, fileList = []) {
-        for (const [node] of dir.children) {
+        for (const [_, node] of dir.children) {
             if (node.isDirectory) {
                 this.getAllFiles(node, fileList);
             } else {
