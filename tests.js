@@ -175,7 +175,6 @@ class TestManager {
         this.test('Suffix tree test', () => {
             const tree = new SuffixTree();
             this.fs.cd('/');
-            //console.log(this.fs.ls('.'))
             this.fs.mkdir('testDir');
             this.fs.cd('testDir');
             const fileMap = new Map();
@@ -199,7 +198,6 @@ class TestManager {
                     tree.addString(content);
                     this.fs.writeFile(fileName, content);
 
-                    // Remember file information
                     fileMap.set(fileName, {
                         name: fileName,
                         path: dirPath + '/' + fileName,

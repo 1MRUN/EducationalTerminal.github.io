@@ -5,29 +5,24 @@ class SuffixTree {
 
     clear() {
         this.text = '';
-
         this.words = [];
         this.nextStrIndex = 0;
         this.delimiters = [];
-
         this.root = new Node();
         this.bottom = new Node();
         this.root.suffixLink = this.bottom;
-
         this.s = this.root;
         this.k = 0;
         this.i = -1;
     }
 
     addString(str) {
-
         if (str.length === 0) {
             return;
         }
         const sep = '#' + this.nextStrIndex + '#';
         str += sep;
         this.nextStrIndex++;
-
         const temp = this.text.length;
         this.text += str.toLowerCase();
         this.delimiters.push(sep);
@@ -36,11 +31,9 @@ class SuffixTree {
         s = this.s;
         k = this.k;
         i = this.i;
-
         for (let j = temp; j < this.text.length; j++) {
             this.bottom.addTransition(this.root, j, j, this.text[j]);
         }
-
         while (this.text[i + 1]) {
             i++;
             let up = this.update(s, k, i);
@@ -48,7 +41,6 @@ class SuffixTree {
             s = up[0];
             k = up[1];
         }
-
         this.s = s;
         this.k = k;
         this.i = i;
@@ -158,7 +150,6 @@ class SuffixTree {
                         break;
                     }
                 } else {
-                    // Transition Fails
                     return [];
                 }
             }
