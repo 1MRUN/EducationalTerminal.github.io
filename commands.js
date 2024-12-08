@@ -28,7 +28,7 @@ class Commands {
                 'cat': 'cat <file>             Display file content'
             };
 
-            const helpText = [
+            return [
                 'WebTerminal Commands:',
                 '==================',
                 '',
@@ -43,8 +43,6 @@ class Commands {
                 '- Use . to reference current directory',
                 '- Directory names in ls output end with /'
             ].join('\n');
-
-            return helpText;
         });
 
         // Clear command
@@ -154,8 +152,7 @@ class Commands {
         this.terminal.registerCommand('cat', 'Display file content', (args) => {
             if (!args.length) return 'cat: missing operand';
             try {
-                const content = this.fs.readFile(args[0]);
-                return content;
+                return this.fs.readFile(args[0]);
             } catch (error) {
                 return `cat: ${error.message}`;
             }
@@ -172,14 +169,13 @@ class Commands {
             for (const filePath of allFiles) {
                 const content = this.fs.readFile(filePath);
                 const distance = this.terminal.bitapSearch(content, pattern);
-                console.log(filePath, content, distance);
                 if (distance < minDistance) {
                     minDistance = distance;
                     minDistanceFile = this.fs.getAbsolutePath() + '/' + filePath;
                 }
             }
 
-            return (minDistanceFile != Infinity) ? `Might be in: ${minDistanceFile}` : 'No files found';
+            return (minDistance !== Infinity) ? `Might be in: ${minDistanceFile}` : 'No files found';
         });
 
 

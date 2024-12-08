@@ -17,7 +17,6 @@ class Terminal {
             }
         };
 
-        this.currentPrompt = this.options.initialPrompt;
         this.history = [];
         this.historyIndex = -1;
         this.commands = {};
@@ -68,10 +67,8 @@ class Terminal {
             if (this.autocompleteSuggestions.length > 0) {
                 // Cycle through suggestions
                 this.autocompleteIndex = (this.autocompleteIndex + 1) % this.autocompleteSuggestions.length;
-                const suggestion = this.autocompleteSuggestions[this.autocompleteIndex];
-
                 // Update input with the suggestion
-                this.currentInput.value = suggestion;
+                this.currentInput.value = this.autocompleteSuggestions[this.autocompleteIndex];
                 this.currentInput.focus();
             }
         }
@@ -279,7 +276,7 @@ class Terminal {
         }
     }
 
-    async executeCommand(commandString) {
+    executeCommand(commandString) {
         const args = commandString.trim().split(/\s+/);
         const commandName = args[0].toLowerCase();
         const commandArgs = args.slice(1);
@@ -288,7 +285,7 @@ class Terminal {
 
         if (this.commands[commandName]) {
             try {
-                const output = await this.commands[commandName].execute(commandArgs);
+                const output = this.commands[commandName].execute(commandArgs);
                 if (output) {
                     this.output(output);
                 }
@@ -297,7 +294,8 @@ class Terminal {
             }
         } else {
             const maybeCommand = this.findClosestCommand(commandName);
-            this.output(`Command not found: ${commandName}\nDid you mean "${maybeCommand}"?`);
+            this.output(`Command not found: ${commandName}\n`);
+            if(maybeCommand) this.output(`Did you mean "${maybeCommand}"?`);
         }
 
         this.createNewPrompt();
@@ -307,17 +305,15 @@ class Terminal {
         const commands = Object.keys(this.commands);
         let closestCommand = null;
         let minDistance = Infinity;
-        console.log(commandName)
         for (const command of commands) {
             const distance = this.bitapSearch(command, commandName);
-            console.log(distance, command)
             if (distance < minDistance) {
                 minDistance = distance;
                 closestCommand = command;
             }
         }
 
-        return closestCommand;
+        return minDistance < 5 ? closestCommand : null;
     }
 
     bitapSearch(text, pattern) {
