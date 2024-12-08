@@ -14,7 +14,7 @@
 ## Features
 
 - Basic Unix-like commands
-- Command history search using a _Suffix Tree_.
+- Command history search using a _Suffix Tree_. `CTRL+R`
 - Spell-checking with Levenshtein Distance
 - Command Autocomplete
 - File Tree representation
