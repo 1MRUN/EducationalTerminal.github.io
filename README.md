@@ -55,7 +55,7 @@ We decided to make testing interesting, so our unit tests are unique. \
 Run the command `test` in the terminal to run the tests from [tests.js](tests.js) file.
 
 ## Demo
-![terminal demo](terminal-demo.gif)
+![terminal demo](resources/terminal-demo.gif)
 ## Contributing to the project
 It is straightforward to add your own commands! Register them under [commands.js](commands.js) file. \
 It is highly encouraged!
