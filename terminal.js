@@ -368,9 +368,7 @@ class Terminal {
             if (forward) {
                 this.searchResultIndex = (this.searchResultIndex + 1) % this.searchResults.length;
             } else {
-                this.searchResultIndex = this.searchResultIndex <= 0 ?
-                    this.searchResults.length - 1 :
-                    this.searchResultIndex - 1;
+                this.searchResultIndex =  this.searchResults.length - 1;
             }
             this.currentInput.value = this.searchResults[this.searchResultIndex];
         } else {

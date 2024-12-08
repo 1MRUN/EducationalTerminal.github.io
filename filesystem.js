@@ -7,7 +7,6 @@ class FileNode {
         this.parent = null;
     }
 
-    // Convert node to serializable object
     toJSON() {
         return {
             name: this.name,
@@ -20,7 +19,6 @@ class FileNode {
         };
     }
 
-    // Initialize from JSON
     static fromJSON(data, parent = null) {
         const node = new FileNode(data.name, data.isDirectory, data.content);
         node.parent = parent;
@@ -45,7 +43,6 @@ class FileSystem {
         this.loadFileSystem();
     }
 
-    // Open or create IndexedDB database
     async openDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(this.dbName, 1);
@@ -65,7 +62,6 @@ class FileSystem {
         });
     }
 
-    // Save the file system state to IndexedDB
     async saveFileSystem() {
         try {
             const db = this.db || await this.openDB();
@@ -130,7 +126,6 @@ class FileSystem {
         }
     }
 
-    // Path resolution and other methods
     resolvePath(path) {
         if (!path) return this.currentDir;
 
