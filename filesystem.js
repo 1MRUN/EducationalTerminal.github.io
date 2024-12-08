@@ -1,26 +1,94 @@
-// filesystem.js
 class FileNode {
     constructor(name, isDirectory = false, content = '') {
         this.name = name;
-        this.isDirectory = isDirectory
+        this.isDirectory = isDirectory;
         this.content = content;
         this.children = isDirectory ? new Map() : null;
         this.parent = null;
     }
+
+    // Convert node to serializable object
+    toJSON() {
+        return {
+            name: this.name,
+            isDirectory: this.isDirectory,
+            content: this.content,
+            children: this.isDirectory ?
+                Array.from(this.children.entries()).map(([node]) => node.toJSON()) :
+                null
+        };
+    }
+
+    // Recreate node from serialized data
+    static fromJSON(data, parent = null) {
+        const node = new FileNode(data.name, data.isDirectory, data.content);
+        node.parent = parent;
+
+        if (data.children) {
+            node.children = new Map();
+            data.children.forEach(childData => {
+                const childNode = FileNode.fromJSON(childData, node);
+                node.children.set(childNode.name, childNode);
+            });
+        }
+
+        return node;
+    }
 }
+
 
 class FileSystem {
     constructor() {
-        this.root = new FileNode('/', true);
-        this.currentDir = this.root;
-        this.initializeFileSystem();
+        this.loadFileSystem();
+    }
+
+    saveFileSystem() {
+        try {
+            const serializedFS = JSON.stringify(this.root.toJSON());
+            localStorage.setItem('fileSystemState', serializedFS);
+            // Also save current directory path for restoration
+            localStorage.setItem('currentDirPath', this.getAbsolutePath(this.currentDir));
+        } catch (error) {
+            console.error('Error saving filesystem:', error);
+        }
+    }
+
+    loadFileSystem() {
+        try {
+            const savedFS = localStorage.getItem('fileSystemState');
+            if (savedFS) {
+                // Restore file system structure
+                this.root = FileNode.fromJSON(JSON.parse(savedFS));
+
+                // Restore current directory
+                const currentPath = localStorage.getItem('currentDirPath') || '/';
+                this.currentDir = this.resolvePath(currentPath);
+            } else {
+                // Initialize new file system if no saved state exists
+                this.root = new FileNode('/', true);
+                this.currentDir = this.root;
+                this.initializeFileSystem();
+            }
+        } catch (error) {
+            console.error('Error loading filesystem:', error);
+            // Fallback to new filesystem
+            this.root = new FileNode('/', true);
+            this.currentDir = this.root;
+            this.initializeFileSystem();
+        }
     }
 
     initializeFileSystem() {
-        // Create some default directories and files
-        this.mkdir('/home');
-        this.mkdir('/docs');
-        this.writeFile('/docs/readme.txt', 'Welcome to WebTerminal FileSystem!');
+        // Create default directories and files only if they don't exist
+        if (!this.root.children.has('home')) {
+            this.mkdir('/home');
+        }
+        if (!this.root.children.has('docs')) {
+            this.mkdir('/docs');
+            if (!this.resolvePath('/docs').children.has('readme.txt')) {
+                this.writeFile('/docs/readme.txt', 'Welcome to WebTerminal FileSystem!');
+            }
+        }
     }
 
     // Path resolution
@@ -47,7 +115,7 @@ class FileSystem {
 
     // Get all files in a directory
     getAllFiles(dir = this.root, fileList = []) {
-        for (const [name, node] of dir.children) {
+        for (const [node] of dir.children) {
             if (node.isDirectory) {
                 this.getAllFiles(node, fileList);
             } else {
@@ -89,19 +157,20 @@ class FileSystem {
                 throw new Error(`${part} is not a directory`);
             }
         }
+        this.saveFileSystem();
     }
 
     cd(path) {
         if (path === '/') {
             this.currentDir = this.root;
-            return;
+        } else {
+            const target = this.resolvePath(path);
+            if (!target.isDirectory) {
+                throw new Error('Not a directory');
+            }
+            this.currentDir = target;
         }
-
-        const target = this.resolvePath(path);
-        if (!target.isDirectory) {
-            throw new Error('Not a directory');
-        }
-        this.currentDir = target;
+        this.saveFileSystem();
     }
 
     ls(path = '') {
@@ -131,6 +200,7 @@ class FileSystem {
         }
 
         parent.children.delete(fileName);
+        this.saveFileSystem();
     }
 
     rmdir(path) {
@@ -146,6 +216,7 @@ class FileSystem {
         }
 
         target.parent.children.delete(target.name);
+        this.saveFileSystem();
     }
 
     tree(node = this.root, prefix = '') {
@@ -181,13 +252,22 @@ class FileSystem {
         const file = new FileNode(fileName, false, content);
         file.parent = parent;
         parent.children.set(fileName, file);
+        this.saveFileSystem();
     }
+
     readFile(path) {
         const target = this.resolvePath(path);
         if (target.isDirectory) {
             throw new Error('Cannot read a directory');
         }
         return target.content;
+    }
+
+    clearFileSystem() {
+        this.root = new FileNode('/', true);
+        this.currentDir = this.root;
+        this.initializeFileSystem();
+        this.saveFileSystem();
     }
 }
 

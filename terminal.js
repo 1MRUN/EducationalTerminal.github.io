@@ -14,13 +14,16 @@ class Terminal {
                 command: '#ffffff',
                 output: '#cccccc',
                 search: '#ff6b6b'
-            }
+            },
+            maxHistorySize: options.maxHistorySize || 1000
         };
 
-        this.history = [];
-        this.historyIndex = -1;
+        this.loadHistory();
+        this.historyIndex = this.history.length;
         this.commands = {};
         this.suffixtree = new SuffixTree();
+
+        this.history.forEach(cmd => this.suffixtree.addString(cmd));
 
         // Reverse search state
         this.isSearching = false;
@@ -33,7 +36,59 @@ class Terminal {
         this.autocompleteIndex = -1;
         this.lastTabInput = '';
 
+        this.setupSessionHandlers();
         this.initializeTerminal();
+    }
+
+    setupSessionHandlers() {
+        // Save history when the window is closed or refreshed
+        window.addEventListener('beforeunload', () => {
+            this.saveHistory();
+        });
+
+        // Save history when the tab is hidden (user switches tabs or minimizes)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.saveHistory();
+            }
+        });
+    }
+
+    loadHistory() {
+        try {
+            const savedHistory = localStorage.getItem('terminalHistory');
+            this.history = savedHistory ? JSON.parse(savedHistory) : [];
+
+            // Validate loaded history
+            if (!Array.isArray(this.history)) {
+                console.error('Invalid history format found in storage');
+                this.history = [];
+            }
+
+            // Trim history if it exceeds maxHistorySize
+            if (this.history.length > this.options.maxHistorySize) {
+                this.history = this.history.slice(-this.options.maxHistorySize);
+            }
+        } catch (error) {
+            console.error('Error loading history:', error);
+            this.history = [];
+        }
+    }
+
+    saveHistory() {
+        try {
+            // Remove any empty commands
+            this.history = this.history.filter(cmd => cmd.trim());
+
+            // Trim history if it exceeds maxHistorySize
+            if (this.history.length > this.options.maxHistorySize) {
+                this.history = this.history.slice(-this.options.maxHistorySize);
+            }
+
+            localStorage.setItem('terminalHistory', JSON.stringify(this.history));
+        } catch (error) {
+            console.error('Error saving history:', error);
+        }
     }
 
     getCommandSuggestions(prefix) {
@@ -249,11 +304,12 @@ class Terminal {
                 if (command.trim()) {
                     this.history.push(command);
                     this.historyIndex = this.history.length;
-                    // Add command to suffix tree
                     this.suffixtree.addString(command);
+                    this.saveHistory();
                     this.executeCommand(command);
                 }
                 break;
+
 
             case 'ArrowUp':
                 event.preventDefault();
@@ -314,6 +370,14 @@ class Terminal {
         }
 
         return minDistance < 5 ? closestCommand : null;
+    }
+
+    clearHistory() {
+        this.history = [];
+        this.historyIndex = 0;
+        this.suffixtree = new SuffixTree();
+        this.saveHistory();
+        return 'Command history cleared';
     }
 
     bitapSearch(text, pattern) {

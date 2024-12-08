@@ -56,6 +56,13 @@ class Commands {
             return this.fs.getAbsolutePath();
         });
 
+        this.terminal.registerCommand('resetterm', 'Reset the terminal session', () => {
+            this.terminal.clear();
+            this.terminal.clearHistory();
+            this.fs.clearFileSystem();
+            return '';
+        })
+
         // LS command
         this.terminal.registerCommand('ls', 'List directory contents', (args) => {
             try {
