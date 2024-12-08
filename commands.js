@@ -1,7 +1,118 @@
-// commands.js
 import FileSystem from './filesystem.js';
 
-class Commands {
+// commands.js
+
+class TestManager {
+    constructor(fs) {
+        this.fs = fs;
+        this.passed = 0;
+        this.failed = 0;
+        this.results = [];
+    }
+
+    runAllTests() {
+        // Directory operations
+        const initialDir = this.fs.getAbsolutePath();
+        this.test('cd changes directory', () => {
+            this.fs.cd('/');
+            if (this.fs.getAbsolutePath() !== '/') throw new Error('Directory not changed');
+        });
+        this.test('mkdir creates directory', () => {
+            this.fs.mkdir('/testdir');
+            const dirs = this.fs.ls('/');
+            if (!dirs.includes('testdir/')) throw new Error('Directory not created');
+        });
+        this.test('cd changes directory', () => {
+            this.fs.cd('/testdir');
+            if (this.fs.getAbsolutePath() !== '/testdir') throw new Error('Directory not changed');
+        });
+
+        this.test('rmdir removes directory', () => {
+            this.fs.cd('/');
+            this.fs.rmdir('/testdir');
+            const dirs = this.fs.ls('/');
+            if (dirs.includes('testdir/')) throw new Error('Directory not removed');
+        });
+        // File operations
+        this.test('touch creates file', () => {
+            this.fs.writeFile('/test.txt', '');
+            const files = this.fs.ls('/');
+            if (!files.includes('test.txt')) throw new Error('File not created');
+        });
+
+        this.test('echo writes to file', () => {
+            const content = 'test content';
+            this.fs.writeFile('/test.txt', content);
+            const readContent = this.fs.readFile('/test.txt');
+            if (readContent !== content) throw new Error('Content not written correctly');
+        });
+
+        this.test('cat reads file', () => {
+            const content = 'test content';
+            const readContent = this.fs.readFile('/test.txt');
+            if (readContent !== content) throw new Error('Content not read correctly');
+        });
+
+        this.test('rm removes file', () => {
+            this.fs.rm('/test.txt');
+            const files = this.fs.ls('/');
+            if (files.includes('test.txt')) throw new Error('File not removed');
+        });
+
+        // Path resolution
+        this.test('absolute path resolution', () => {
+            this.fs.mkdir('/a/b/c');
+            const path = this.fs.resolvePath('/a/b/c');
+            if (!path.isDirectory) throw new Error('Path resolution failed');
+        });
+
+        this.test('relative path resolution', () => {
+            this.fs.cd('/a');
+            const path = this.fs.resolvePath('b/c');
+            if (!path.isDirectory) throw new Error('Relative path resolution failed');
+        });
+
+        // Error cases
+        this.test('error on invalid path', () => {
+            try {
+                this.fs.resolvePath('/nonexistent');
+                throw new Error('Should have thrown error');
+            } catch (e) {
+                if (!e.message.includes('Path not found')) throw new Error('Wrong error message');
+            }
+        });
+        this.fs.cd(initialDir);
+        //console.log(this.formatResults());
+        return this.formatResults();
+    }
+
+    async test(name, fn) {
+        try {
+            fn();
+            this.passed++;
+            this.results.push(`✓ ${name}`);
+        } catch (error) {
+            this.failed++;
+            this.results.push(`✗ ${name}: ${error.message}`);
+        }
+    }
+
+    formatResults() {
+        return [
+            'Test Results:',
+            '=============',
+            '',
+            ...this.results,
+            '',
+            `Total: ${this.passed + this.failed}`,
+            `Passed: ${this.passed}`,
+            `Failed: ${this.failed}`,
+            '',
+            this.failed === 0 ? 'All tests passed!' : 'Some tests failed.'
+        ].join('\n');
+    }
+}
+export class Commands {
     constructor(terminal) {
         this.terminal = terminal;
         this.fs = new FileSystem();
@@ -47,7 +158,7 @@ class Commands {
             this.terminal.clearHistory();
             this.fs.clearFileSystem();
             return '';
-        })
+        });
 
         // LS command
         this.terminal.registerCommand('ls', 'List directory contents', (args) => {
@@ -119,6 +230,7 @@ class Commands {
                 return `touch: ${error.message}`;
             }
         });
+
         // ECHO command
         this.terminal.registerCommand('echo', 'Echo text to the terminal or a file', (args) => {
             if (args.length === 0) return '';
@@ -141,6 +253,7 @@ class Commands {
                 return output;
             }
         });
+
         // CAT command
         this.terminal.registerCommand('cat', 'Display file content', (args) => {
             if (!args.length) return 'cat: missing operand';
@@ -171,10 +284,15 @@ class Commands {
             return (minDistance !== Infinity) ? `Might be in: ${minDistanceFile}` : 'No files found';
         });
 
-
         // Other basic commands
         this.terminal.registerCommand('date', 'Display current date and time', () => {
             return new Date().toString();
+        });
+
+        // Test command
+        this.terminal.registerCommand('test', 'Run system tests', () => {
+            const tester = new TestManager(this.fs);
+            return tester.runAllTests()
         });
     }
 }
