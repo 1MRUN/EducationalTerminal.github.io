@@ -31,7 +31,6 @@ class Terminal {
         // Autocomplete state
         this.autocompleteSuggestions = [];
         this.autocompleteIndex = -1;
-        this.lastTabInput = '';
 
         // Create an initialization promise that we can await
         this.initializationPromise = this.initialize();
@@ -328,12 +327,10 @@ class Terminal {
         // Only autocomplete if we're working with the first word (command name)
         if (words.length === 1) {
             // If this is a new tab press with different input, generate new suggestions
-            if (currentWord !== this.lastTabInput) {
+            if (this.autocompleteSuggestions.length === 0) {
                 this.autocompleteSuggestions = this.getCommandSuggestions(currentWord);
                 this.autocompleteIndex = -1;
-                this.lastTabInput = currentWord;
 
-                // Show all suggestions only on first Tab press
                 if (this.autocompleteSuggestions.length > 1) {
                     const suggestionsText = this.autocompleteSuggestions
                         .map(s => `${s}${this.commands[s].description ? ` - ${this.commands[s].description}` : ''}`)
