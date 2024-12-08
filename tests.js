@@ -1,9 +1,12 @@
+import SuffixTree from './suffixtree.js';
+
 class TestManager {
     constructor(fs) {
         this.fs = fs;
         this.passed = 0;
         this.failed = 0;
         this.results = [];
+        this.suffixtree = new SuffixTree();
         this.dirNames = ['documents', 'photos', 'music', 'downloads', 'projects', 'backup', 'work', 'personal', 'videos', 'games'];
         this.fileNames = [
             'report.txt', 'image.jpg', 'data.csv', 'notes.md', 'script.js',
@@ -22,7 +25,7 @@ class TestManager {
             'Project requirements and specifications.',
             'Dear John, Thank you for your email...',
             'TODO: 1. Complete report 2. Send emails',
-            '# Markdown Header\n* Bullet point\n* Another point',
+            'Markdown Header\n* Bullet point\n* Another point',
             '{"name": "Test", "value": 123}',
             'console.log("Hello World!");',
             '<html><body>Sample webpage</body></html>',
@@ -116,7 +119,7 @@ class TestManager {
             this.fs.cd('testDir');
             const fileMap = new Map();
             const dirMap = new Map();
-
+            const was = new Map();
             // Create random number of directories (1-5)
             const numDirs = Math.floor(Math.random() * 5) + 1;
             for (let i = 0; i < numDirs; i++) {
@@ -133,7 +136,6 @@ class TestManager {
                     const fileName = this.fileNames[Math.floor(Math.random() * this.fileNames.length)];
                     const content = this.possibleContents[Math.floor(Math.random() * this.possibleContents.length)];
                     this.fs.writeFile(fileName, content);
-
                     // Remember file information
                     fileMap.set(fileName, {
                         name: fileName,
@@ -142,7 +144,6 @@ class TestManager {
                     });
                     childFiles.push(fileName);
                 }
-
                 // Remember directory information
                 dirMap.set(dirName, {
                     name: dirName,
@@ -164,6 +165,70 @@ class TestManager {
                         throw new Error(`Content mismatch in ${file}`);
                     }
                 }
+            }
+            this.fs.cd('..');
+            if (fileMap.size === 0 || dirMap.size === 0) {
+                throw new Error('Maps not populated correctly');
+            }
+        });
+        this.fs.rmrf('/testDir');
+        this.test('Suffix tree test', () => {
+            this.fs.cd('/');
+            //console.log(this.fs.ls('.'))
+            this.fs.mkdir('testDir');
+            this.fs.cd('testDir');
+            const fileMap = new Map();
+            const dirMap = new Map();
+            
+            // Create random number of directories (1-5)
+            const numDirs = Math.floor(Math.random() * 10) + 1;
+            for (let i = 0; i < numDirs; i++) {
+                const dirName = this.dirNames[Math.floor(Math.random() * this.dirNames.length)];
+                this.fs.mkdir(dirName);
+                this.fs.cd(dirName);
+
+                const dirPath = this.fs.getAbsolutePath();
+                const childFiles = [];
+
+                // Create random number of files (1-3) in each directory
+                const numFiles = Math.floor(Math.random() * 20) + 1;
+                for (let j = 0; j < numFiles; j++) {
+                    const fileName = this.fileNames[Math.floor(Math.random() * this.fileNames.length)];
+                    const content = this.possibleContents[Math.floor(Math.random() * this.possibleContents.length)];
+                    this.suffixtree.addString(content);
+                    this.fs.writeFile(fileName, content);
+
+                    // Remember file information
+                    fileMap.set(fileName, {
+                        name: fileName,
+                        path: dirPath + '/' + fileName,
+                        content: content
+                    });
+                    childFiles.push(fileName);
+                }
+                for (let file of fileMap.values()) {
+                    const startIdx = Math.floor(Math.random() * file.content.length);
+                    const maxLength = file.content.length - startIdx; // Remaining length of the string
+                    const length = Math.floor(Math.random() * maxLength) + 1; // Random substring length
+                    const randomSubstring = file.content.substring(startIdx, startIdx + length);
+                    //console.log('new finding\n');
+                    //console.log('rand :',randomSubstring, '\n cont:',file.content);
+                    // Perform the search
+                    const searchResult = this.suffixtree.search(randomSubstring);
+                    //console.log(searchResult, ':search\n ',randomSubstring);
+                    // Optionally, verify the result
+                    if (searchResult.findIndex((result) => result === randomSubstring) === -1) {
+                        throw new Error(`SuffixTree search failed for substring: ${randomSubstring}`);
+                    }
+
+                    // Log or store results if needed
+                    //console.log(`Searched substring: "${randomSubstring}", Found: ${searchResult}`);
+                }  
+                dirMap.set(dirName, {
+                    name: dirName,
+                    path: dirPath,
+                    children: childFiles
+                });
             }
             this.fs.cd('..');
             if (fileMap.size === 0 || dirMap.size === 0) {
