@@ -333,25 +333,37 @@ class Terminal {
     }
 
     executeCommand(commandString) {
-        const args = commandString.trim().split(/\s+/);
-        const commandName = args[0].toLowerCase();
-        const commandArgs = args.slice(1);
+        const commandChain = commandString.split('&&').map(cmd => cmd.trim());
 
-        this.currentInput.disabled = true;
+        for (const command of commandChain) {
+            if (!command) continue; // Skip empty commands
 
-        if (this.commands[commandName]) {
-            try {
-                const output = this.commands[commandName].execute(commandArgs);
-                if (output) {
-                    this.output(output);
-                }
-            } catch (error) {
-                this.output(`Error: ${error.message}`);
+            const args = command.trim().split(/\s+/);
+            const commandName = args[0].toLowerCase();
+            const commandArgs = args.slice(1);
+
+            if (this.currentInput) {
+                this.currentInput.disabled = true;
             }
-        } else {
-            const maybeCommand = this.findClosestCommand(commandName);
-            this.output(`Command not found: ${commandName}\n`);
-            if(maybeCommand) this.output(`Did you mean "${maybeCommand}"?`);
+
+            if (this.commands[commandName]) {
+                try {
+                    const output = this.commands[commandName].execute(commandArgs);
+                    if (output) {
+                        this.output(output);
+                    }
+                } catch (error) {
+                    this.output(`Error executing "${command}": ${error.message}`);
+                    break;
+                }
+            } else {
+                const maybeCommand = this.findClosestCommand(commandName);
+                this.output(`Command not found: ${commandName}`);
+                if (maybeCommand) {
+                    this.output(`Did you mean "${maybeCommand}"?`);
+                }
+                break;
+            }
         }
 
         this.createNewPrompt();
