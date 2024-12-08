@@ -15,11 +15,12 @@ class FileNode {
             content: this.content,
             children: this.isDirectory ?
                 Array.from(this.children.entries()).map(([_, node]) => node.toJSON()) :
-                null
+                null,
+            parentName: this.parent?.name || null
         };
     }
 
-    // Recreate node from serialized data
+    // Initialize from JSON
     static fromJSON(data, parent = null) {
         const node = new FileNode(data.name, data.isDirectory, data.content);
         node.parent = parent;
@@ -36,50 +37,89 @@ class FileNode {
     }
 }
 
-
 class FileSystem {
     constructor() {
+        this.dbName = 'fileSystemDB';
+        this.storeName = 'fileSystemState';
+        this.db = null;
         this.loadFileSystem();
     }
 
-    saveFileSystem() {
+    // Open or create IndexedDB database
+    async openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, 1);
+
+            request.onerror = () => reject('Error opening database');
+            request.onsuccess = () => {
+                this.db = request.result;
+                resolve(this.db);
+            };
+
+            request.onupgradeneeded = (event) => {
+                this.db = event.target.result;
+                if (!this.db.objectStoreNames.contains(this.storeName)) {
+                    this.db.createObjectStore(this.storeName, { keyPath: 'name' });
+                }
+            };
+        });
+    }
+
+    // Save the file system state to IndexedDB
+    async saveFileSystem() {
         try {
-            const serializedFS = JSON.stringify(this.root.toJSON());
-            localStorage.setItem('fileSystemState', serializedFS);
-            // Also save current directory path for restoration
-            localStorage.setItem('currentDirPath', this.getAbsolutePath(this.currentDir));
+            const db = this.db || await this.openDB();
+            const transaction = db.transaction(this.storeName, 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            const serializedFS = this.root.toJSON();
+            const request = store.put(serializedFS);
+
+            await new Promise((resolve, reject) => {
+                transaction.oncomplete = resolve;
+                transaction.onerror = () => reject('Error saving filesystem');
+            });
+
         } catch (error) {
             console.error('Error saving filesystem:', error);
         }
     }
 
-    loadFileSystem() {
+    // Load the file system state from IndexedDB
+    async loadFileSystem() {
         try {
-            const savedFS = localStorage.getItem('fileSystemState');
-            if (savedFS) {
-                // Restore file system structure
-                this.root = FileNode.fromJSON(JSON.parse(savedFS));
+            const db = await this.openDB();
+            const transaction = db.transaction(this.storeName, 'readonly');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.get('/');
 
-                // Restore current directory
-                const currentPath = localStorage.getItem('currentDirPath') || '/';
-                this.currentDir = this.resolvePath(currentPath);
-            } else {
-                // Initialize new file system if no saved state exists
-                this.root = new FileNode('/', true);
-                this.currentDir = this.root;
-                this.initializeFileSystem();
-            }
+            request.onsuccess = (event) => {
+                const savedFS = event.target.result;
+                if (savedFS) {
+                    this.root = FileNode.fromJSON(savedFS);
+                    this.currentDir = this.root;
+                } else {
+                    this.initializeNewFileSystem();
+                }
+            };
+
+            request.onerror = (event) => {
+                console.error('Error loading filesystem:', event);
+                this.initializeNewFileSystem();
+            };
         } catch (error) {
             console.error('Error loading filesystem:', error);
-            // Fallback to new filesystem
-            this.root = new FileNode('/', true);
-            this.currentDir = this.root;
-            this.initializeFileSystem();
+            this.initializeNewFileSystem();
         }
     }
 
+    initializeNewFileSystem() {
+        this.root = new FileNode('/', true);
+        this.currentDir = this.root;
+        this.initializeFileSystem();
+        this.saveFileSystem();
+    }
+
     initializeFileSystem() {
-        // Create default directories and files only if they don't exist
         if (!this.root.children.has('home')) {
             this.mkdir('/home');
         }
@@ -91,7 +131,7 @@ class FileSystem {
         }
     }
 
-    // Path resolution
+    // Path resolution and other methods
     resolvePath(path) {
         if (!path) return this.currentDir;
 
@@ -113,7 +153,6 @@ class FileSystem {
         return current;
     }
 
-    // Get all files in a directory
     getAllFiles(dir = this.root, fileList = []) {
         for (const [_, node] of dir.children) {
             if (node.isDirectory) {
@@ -125,7 +164,6 @@ class FileSystem {
         return fileList;
     }
 
-    // Get absolute path of a node
     getAbsolutePath(node = this.currentDir) {
         const parts = [];
         let current = node;
@@ -138,7 +176,6 @@ class FileSystem {
         return '/' + parts.join('/');
     }
 
-    // File system operations
     mkdir(path) {
         const parts = path.split('/').filter(p => p);
         let current = path.startsWith('/') ? this.root : this.currentDir;
@@ -179,9 +216,7 @@ class FileSystem {
             return [target.name];
         }
 
-        return Array.from(target.children.values()).map(node => {
-            return node.isDirectory ? node.name + '/' : node.name;
-        });
+        return Array.from(target.children.values()).map(node => node.isDirectory ? node.name + '/' : node.name);
     }
 
     rm(path) {

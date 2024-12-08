@@ -164,9 +164,6 @@ class SuffixTree {
 
             if (curPatternIndex >= pattern.length) {
                 matchedWordIds = this.selectWordsUnder(selectedTrans);
-                console.log('Got words under');
-                console.log(selectedTrans);
-                console.log(matchedWordIds);
 
                 curNode = null;
             } else {
@@ -211,14 +208,6 @@ class SuffixTree {
 
                         var matchedWordId = +this.text.slice(curElement.start - curElement.prefixCount, curElement.end);
                         matchedWordIds.add(matchedWordId);
-
-                        console.log({
-                            msg: 'Added',
-                            matchedWordId,
-                            curElement,
-                            textSize: this.text.length,
-                            textSlice: this.text.slice(curElement.start + 1, curElement.end),
-                        });
 
                         break;
                     }

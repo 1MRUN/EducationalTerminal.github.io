@@ -42,7 +42,27 @@
 
   const terminal = new Terminal('terminal-container', {
     prompt: '$ ',
-    welcomeMessage: 'Welcome to WebTerminal v1.0.0\nType "help" for available commands.'
+    welcomeMessage: `
+Welcome to our
+          _                 _   _                   _
+  ___  __| |_   _  ___ __ _| |_(_) ___  _ __   __ _| |
+ / _ \\/ _\` | | | |/ __/ _\` | __| |/ _ \\| '_ \\ / _\` | |
+|  __/ (_| | |_| | (_| (_| | |_| | (_) | | | | (_| | |
+ \\___|\\__,_|\\__,_|\\___\\__,_|\\__|_|\\___/|_| |_|\\__,_|_|
+
+  _____                    _             _
+ /__   \\___ _ __ _ __ ___ (_)_ __   __ _| |
+   / /\\/ _ \\ '__| '_ \` _ \\| | '_ \\ / _\` | |
+  / / |  __/ |  | | | | | | | | | | (_| | |
+  \\/   \\___|_|  |_| |_| |_|_|_| |_|\\__,_|_|
+
+
+By Stas and Imran.
+Type "help" for available commands.`
+  });
+
+  terminal.ready().then(terminal => {
+    const commands = new Commands(terminal);
   });
 
   new Commands(terminal);
