@@ -16,23 +16,18 @@ class Terminal {
             },
             maxHistorySize: options.maxHistorySize || 1000
         };
-
         this.history = [];
         this.historyIndex = 0;
         this.commands = {};
         this.suffixtree = new SuffixTree();
 
-        // Reverse search state
         this.isSearching = false;
         this.searchBuffer = '';
         this.searchResults = [];
         this.searchResultIndex = -1;
 
-        // Autocomplete state
         this.autocompleteSuggestions = [];
         this.autocompleteIndex = -1;
-
-        // Create an initialization promise that we can await
         this.initializationPromise = this.initialize();
     }
 
@@ -51,7 +46,6 @@ class Terminal {
         }
     }
 
-    // Return the initialization promise so callers can wait for the terminal to be ready
     ready() {
         return this.initializationPromise;
     }
@@ -324,25 +318,14 @@ class Terminal {
         const words = input.split(/\s+/);
         const currentWord = words[0];
 
-        // Only autocomplete if we're working with the first word (command name)
         if (words.length === 1) {
-            // If this is a new tab press with different input, generate new suggestions
             if (this.autocompleteSuggestions.length === 0) {
                 this.autocompleteSuggestions = this.getCommandSuggestions(currentWord);
                 this.autocompleteIndex = -1;
-
-                if (this.autocompleteSuggestions.length > 1) {
-                    const suggestionsText = this.autocompleteSuggestions
-                        .map(s => `${s}${this.commands[s].description ? ` - ${this.commands[s].description}` : ''}`)
-                        .join('\n');
-                    this.output(suggestionsText);
-                }
             }
 
             if (this.autocompleteSuggestions.length > 0) {
-                // Cycle through suggestions
                 this.autocompleteIndex = (this.autocompleteIndex + 1) % this.autocompleteSuggestions.length;
-                // Update input with the suggestion
                 this.currentInput.value = this.autocompleteSuggestions[this.autocompleteIndex];
                 this.currentInput.focus();
             }
@@ -379,7 +362,6 @@ class Terminal {
             return;
         }
 
-        // Use suffix tree to search
         this.searchResults = this.suffixtree.search(this.searchBuffer);
 
         if (this.searchResults.length > 0) {

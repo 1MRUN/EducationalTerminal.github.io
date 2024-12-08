@@ -11,30 +11,16 @@ class Commands {
     initializeCommands() {
         // Help command with detailed descriptions
         this.terminal.registerCommand('help', 'Display available commands and their usage', () => {
-            const commandHelp = {
-                'help': 'help                   Display this help message',
-                'clear': 'clear                  Clear the terminal screen',
-                'pwd': 'pwd                    Print current working directory',
-                'ls': 'ls [path]              List directory contents. If no path is specified, lists current directory',
-                'cd': 'cd [path]              Change directory. If no path is specified, returns to root',
-                'mkdir': 'mkdir <path>           Create a new directory at specified path',
-                'rm': 'rm <file>              Remove a file',
-                'rmdir': 'rmdir <directory>      Remove an empty directory',
-                'tree': 'tree                   Display directory structure in tree format',
-                'touch': 'touch <file>           Create a new empty file',
-                'date': 'date                   Display current date and time',
-                'version': 'version                Display terminal version',
-                'echo': 'echo <text> >> <file>  Echo text to the terminal or a file',
-                'cat': 'cat <file>             Display file content'
-            };
-
+            const commandHelp =
+                Object.entries(this.terminal.commands)
+                .map(([name, command]) => `${name} - ${command.description}`)
             return [
                 'WebTerminal Commands:',
                 '==================',
                 '',
                 'Usage:',
                 '------',
-                ...Object.values(commandHelp),
+                commandHelp.join('\n'),
                 '',
                 'Notes:',
                 '------',
@@ -189,10 +175,6 @@ class Commands {
         // Other basic commands
         this.terminal.registerCommand('date', 'Display current date and time', () => {
             return new Date().toString();
-        });
-
-        this.terminal.registerCommand('version', 'Display terminal version', () => {
-            return 'WebTerminal v1.0.0';
         });
     }
 }

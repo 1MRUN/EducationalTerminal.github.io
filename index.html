@@ -62,7 +62,7 @@ Type "help" for available commands.`
   });
 
   terminal.ready().then(terminal => {
-    const commands = new Commands(terminal);
+    new Commands(terminal);
   });
 
   new Commands(terminal);
