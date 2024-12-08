@@ -296,10 +296,54 @@ class Terminal {
                 this.output(`Error: ${error.message}`);
             }
         } else {
-            this.output(`Command not found: ${commandName}`);
+            const maybeCommand = this.findClosestCommand(commandName);
+            this.output(`Command not found: ${commandName}\nDid you mean "${maybeCommand}"?`);
         }
 
         this.createNewPrompt();
+    }
+
+    findClosestCommand(commandName) {
+        const commands = Object.keys(this.commands);
+        let closestCommand = null;
+        let minDistance = Infinity;
+        console.log(commandName)
+        for (const command of commands) {
+            const distance = this.bitapSearch(command, commandName);
+            console.log(distance, command)
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestCommand = command;
+            }
+        }
+
+        return closestCommand;
+    }
+
+    bitapSearch(text, pattern) {
+        if (!pattern) return text.length;
+        if (!text) return pattern.length;
+
+        const dist = [];
+        for (let i = 0; i <= text.length; i++) {
+            dist[i] = [i];
+        }
+        for (let j = 0; j <= pattern.length; j++) {
+            dist[0][j] = j;
+        }
+
+        for (let i = 1; i <= text.length; i++) {
+            for (let j = 1; j <= pattern.length; j++) {
+                const cost = text[i - 1] === pattern[j - 1] ? 0 : 1;
+                dist[i][j] = Math.min(
+                    dist[i - 1][j] + 1,
+                    dist[i][j - 1] + 1,
+                    dist[i - 1][j - 1] + cost
+                );
+            }
+        }
+
+        return dist[text.length][pattern.length];
     }
 
     output(text) {

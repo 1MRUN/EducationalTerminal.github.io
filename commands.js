@@ -23,7 +23,9 @@ class Commands {
                 'tree': 'tree                   Display directory structure in tree format',
                 'touch': 'touch <file>           Create a new empty file',
                 'date': 'date                   Display current date and time',
-                'version': 'version                Display terminal version'
+                'version': 'version                Display terminal version',
+                'echo': 'echo <text> >> <file>  Echo text to the terminal or a file',
+                'cat': 'cat <file>             Display file content'
             };
 
             const helpText = [
@@ -126,6 +128,60 @@ class Commands {
                 return `touch: ${error.message}`;
             }
         });
+        // ECHO command
+        this.terminal.registerCommand('echo', 'Echo text to the terminal or a file', (args) => {
+            if (args.length === 0) return '';
+
+            const output = args.join(' ');
+            const redirectIndex = output.indexOf('>>');
+
+            if (redirectIndex !== -1) {
+                const text = output.substring(0, redirectIndex).trim();
+                const filePath = output.substring(redirectIndex + 2).trim();
+
+                try {
+                    const fileContent = this.fs.readFile(filePath) || '';
+                    this.fs.writeFile(filePath, fileContent + text + '\n');
+                    return '';
+                } catch (error) {
+                    return `echo: ${error.message}`;
+                }
+            } else {
+                return output;
+            }
+        });
+        // CAT command
+        this.terminal.registerCommand('cat', 'Display file content', (args) => {
+            if (!args.length) return 'cat: missing operand';
+            try {
+                const content = this.fs.readFile(args[0]);
+                return content;
+            } catch (error) {
+                return `cat: ${error.message}`;
+            }
+        });
+
+        // GREP command
+        this.terminal.registerCommand('grep', 'Search for a pattern in all files', (args) => {
+            if (args.length < 1) return 'grep: missing pattern';
+            const pattern = args[0];
+            const allFiles = this.fs.getAllFiles();
+            let minDistance = Infinity;
+            let minDistanceFile = '';
+
+            for (const filePath of allFiles) {
+                const content = this.fs.readFile(filePath);
+                const distance = this.terminal.bitapSearch(content, pattern);
+                console.log(filePath, content, distance);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    minDistanceFile = this.fs.getAbsolutePath() + '/' + filePath;
+                }
+            }
+
+            return (minDistanceFile != Infinity) ? `Might be in: ${minDistanceFile}` : 'No files found';
+        });
+
 
         // Other basic commands
         this.terminal.registerCommand('date', 'Display current date and time', () => {

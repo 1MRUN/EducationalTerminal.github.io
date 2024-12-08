@@ -2,7 +2,7 @@
 class FileNode {
     constructor(name, isDirectory = false, content = '') {
         this.name = name;
-        this.isDirectory = isDirectory;
+        this.isDirectory = isDirectory
         this.content = content;
         this.children = isDirectory ? new Map() : null;
         this.parent = null;
@@ -43,6 +43,18 @@ class FileSystem {
             current = current.children.get(part);
         }
         return current;
+    }
+
+    // Get all files in a directory
+    getAllFiles(dir = this.root, fileList = []) {
+        for (const [name, node] of dir.children) {
+            if (node.isDirectory) {
+                this.getAllFiles(node, fileList);
+            } else {
+                fileList.push(this.getAbsolutePath(node));
+            }
+        }
+        return fileList;
     }
 
     // Get absolute path of a node
@@ -169,6 +181,13 @@ class FileSystem {
         const file = new FileNode(fileName, false, content);
         file.parent = parent;
         parent.children.set(fileName, file);
+    }
+    readFile(path) {
+        const target = this.resolvePath(path);
+        if (target.isDirectory) {
+            throw new Error('Cannot read a directory');
+        }
+        return target.content;
     }
 }
 
