@@ -96,7 +96,7 @@ class Terminal {
 
     async _loadHistory() {
         try {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve, _) => {
                 if (!this.db) {
                     resolve([]);
                     return;

@@ -72,8 +72,7 @@ class FileSystem {
             const transaction = db.transaction(this.storeName, 'readwrite');
             const store = transaction.objectStore(this.storeName);
             const serializedFS = this.root.toJSON();
-            const request = store.put(serializedFS);
-
+            store.put(serializedFS);
             await new Promise((resolve, reject) => {
                 transaction.oncomplete = resolve;
                 transaction.onerror = () => reject('Error saving filesystem');
