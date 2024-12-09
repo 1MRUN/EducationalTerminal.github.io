@@ -1,4 +1,4 @@
-# Project Name
+# Educational Terminal
 
 > Empower students with hands-on terminal skills through our web-based teaching tool. Enhance their CS education with real-world command line experience, all within a safe, accessible platform. Equip the next generation with critical tech skills — effortlessly, anywhere, anytime.
 
